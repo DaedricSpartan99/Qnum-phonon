@@ -1,0 +1,457 @@
+%-------------------------------------------------------------
+% 导言区
+\documentclass[dvipsnames]{beamer}
+\usepackage[utf8]{inputenc}
+\usepackage{hyperref}
+\usepackage[T1]{fontenc}
+\usepackage{chemformula}
+
+\usepackage{listings}
+
+\usepackage{latexsym,multicol,booktabs}
+%\usepackage[dvipsnames]{xcolor}
+%\usepackage{calligra}
+\usepackage{amsmath,amssymb,siunitx}
+%\usepackage{BOONDOX-cal}
+\usepackage{bm}		%   数学公式宏包
+\usepackage{graphicx,pstricks,stackengine}      
+\usepackage{subcaption}
+
+\lstset{
+  basicstyle=\fontsize{8}{13}\selectfont\ttfamily
+}
+
+%   个人信息
+\author{Raffaele Ancarola}
+\title{Phonon calculation in a crystal using DFPT}
+\subtitle{Project 8 - CH-452}
+\institute{EPFL}    
+\date{February 2, 2022}
+
+\logo{\includegraphics[height=0.3cm]{logo.png}\hspace*{0.15cm}}
+
+%   设置主题文件    后缀名为.sty的文件是一个主题文件,初学者不要修改sty文件
+\usepackage{SCU}
+
+
+
+%   defs 特殊字体
+\def\cmd#1{\texttt{\color{red}\footnotesize $\backslash$#1}}
+\def\env#1{\texttt{\color{blue}\footnotesize #1}}
+
+
+%   简化定理命令
+\newtheorem{thm}{Theorem}[theorem]
+
+%\newcommand{\hbar}{\mathchar'26\mkern-9mu h}
+\newcommand{\diff}[2]{\frac{\partial #1}{\partial #2}}
+\newcommand{\ddiffx}[1]{\frac{\partial^2 }{\partial^2 #1}}
+\newcommand{\ddiff}[2]{\frac{\partial^2 #1}{\partial^2 #2}}
+\newcommand{\ddiffd}[3]{\frac{\partial^2 #1}{\partial #2 \partial #3}}
+\newcommand{\electrons}{\textcolor{red}{electrons}}
+\newcommand{\nuclei}{\textcolor{blue}{nuclei}}
+%—-------------------------------------------------------------
+% 正文区
+
+\begin{document}
+
+	% 封面
+	\begin{frame}
+		\titlepage
+	\end{frame}
+	
+	% 目录
+	\begin{frame}
+		\tableofcontents[sectionstyle=show,subsectionstyle=show/shaded/hide,subsubsectionstyle=show/shaded/hide]
+	\end{frame}
+		
+	
+	%—------------------------------------------------------
+	% 正文
+	\section{Theory}
+	
+	    \begin{frame}{Phonons: overview}
+		
+		\begin{itemize}
+		\item Oscillations of atomic structure in a crystal
+		\item Harmonic oscillators: $\propto e^{i(qR+\Omega(q)t)} $
+		\item Dispersion relation: $\Omega(q)$
+		\end{itemize}
+		
+		\begin{exampleblock}{Phonon types:}
+		\begin{itemize}
+		\item In phase: \textit{acoustic} phonons, $\Omega(q= 0) = 0$.
+		\item Out of phase: \textit{optical} phonons, $\Omega(q=0) \neq 0$.
+		\end{itemize}
+		\end{exampleblock}
+		
+		\begin{exampleblock}{\textit{DOS} (density of states)}
+		\[ D(\Omega) = \frac{V}{V_q} \frac{1}{v_g(\Omega),} \quad v_g(\Omega) = \diff{\Omega}{q}\]
+		\end{exampleblock}
+		\end{frame}
+	
+		\begin{frame}{System description \cite{qetuto}}
+		The potential involves all coulomb interactions:
+		\[ V(r, R) = V_{nn}(R) + V_{ne}(r,R) + V_{ee}(r) \]
+		$r$ electron positions, $R$ nuclei positions.
+		\[i \hbar \diff{\Phi}{t}(r,R;t) = \left(-\sum_I\frac{\hbar^2}{2M_I}\ddiffx{R_I} - \sum_i \frac{\hbar^2}{2m} \ddiffx{r_i} + V(r, R) \right)\Phi(r,R;t)\]
+		\begin{block}{Born-Opperheim approximation (adiabatic)}
+		Electrons are much faster and more lightweight than nuclei:
+		\[ \Phi(r,R;t) \approx \phi(R) \psi(r|R) e^{-\frac{i\hat{E}t}{\hbar}}\]
+		\end{block}
+		\end{frame}
+		
+		\begin{frame}{System description}
+		\begin{align*}
+		&\left(-\sum_i\frac{\hbar^2}{2m} \ddiffx{r_i} + V(r,R) \right) \psi(r|R) = E(R) \psi(r|R) & \text{\electrons} \\
+		&\left(-\sum_I\frac{\hbar^2}{2M_I} \ddiffx{R_I} + E(R) \right) \phi(R) = \hat{E} \phi(R) & \text{\nuclei} 
+		\end{align*}
+		We treat \nuclei ~as classical particles, so at equilibrium forces are vanishing:
+		\[F_I^\alpha = - \diff{E(R)}{R_I^\alpha} = 0 \]
+		\end{frame}
+		
+		\begin{frame}{Phonon dispersion relation}
+		Expand $E(R)$ around equilibrium positions until order two:
+	    \begin{equation} \label{eq:forces}
+	    \sum_{J,\beta}(C_{IJ}^{\alpha\beta}(R) - M_I \omega^2 \delta_{IJ} \delta_{\alpha\beta})U_J^\beta(R) = 0 \quad C_{IJ}^{\alpha\beta} = \ddiffd{E(R)}{R_I^\alpha}{R_J^\beta}
+	    \end{equation}
+	    a set of independent harmonic oscillators for nuclei $I$ and coordinate $\alpha$. 
+	    \begin{itemize}
+	    \item $C_{IJ}^{\alpha\beta}(R)$ are called \textit{inter-atomic force constants}
+	    \item $U_J^\beta(R)$ represent the oscillation amplitudes
+	    \item \alert{This is a diagonalization problem!}
+	    \end{itemize}
+		\end{frame}
+		
+		\begin{frame}{Phonon dispersion relation}
+		Taking fourier transform on eq. \ref{eq:forces}, get an equivalent formulation:
+	    \[ \sum_{t,s}(\tilde{C}_{st}^{\alpha\beta}(q) - M_s \Omega^2(q) \delta_{st} \delta_{\alpha\beta})U_t^\beta(q) = 0\]
+	    \begin{block}{Introduce a perturbation $u_s(q)$:}
+	    \begin{align*}
+	    &R_I[u_s](q) = R_l + \tau_s + u_s(q)e^{iqR_l} \\
+	    &\tilde{C}_{st}^{\alpha\beta}(q) = \sum_R e^{-iqR}C_{st}^{\alpha\beta} = \frac{1}{N_c} \ddiffd{E}{u_s^\ast(q)}{u_t(q)} 
+	    \end{align*}
+	    \end{block}
+	    \alert{Evaluate $\tilde{C}_{st}^{\alpha\beta}(q)$ using \texttt{DFPT}!}
+		\end{frame}
+		
+		\begin{frame}{DFPT (density functional perturbation theory)}
+		Introduce a perturbation $\delta V_0(\lambda)$ on the system potential $V(r,R)$, then energy and density can be Taylor expanded:
+		\begin{align*}
+		&E_\lambda = E + \lambda \diff{E}{\lambda} + \frac{1}{2} \lambda^2 \ddiff{E}{\lambda} + \dots \\
+		&\varrho_\lambda = \varrho + \lambda \diff{\varrho}{\lambda} + \frac{1}{2} \lambda^2 \ddiff{\varrho}{\lambda} + \dots
+		\end{align*}
+		The \textcolor{orange}{linear response} can be evaluated as function of the perturbed potential.
+		\end{frame}
+		
+		\begin{frame}{DPFT (density functional perturbation theory)}
+		\begin{block}{Corollary of Hellmann-Feynman theorem}
+		\[\ddiffd{E}{\lambda}{\mu} = \int dr \diff{V(r)}{\lambda} \diff{\varrho(r)}{\mu} + \varrho(r) \ddiffd{V(r)}{\lambda}{\mu}\]
+		\end{block}
+		\onslide<2->
+		\alert{In practice:} 
+		\begin{itemize}
+		\item set $\lambda = u_s^\alpha(q)$, $\mu = u_t^\beta$, then find $\tilde{C}_{st}^{\alpha\beta}$.
+		\item the unperturbed \electrons ' system needs to be relaxed first
+		\item $\forall q$ the perturbed \electrons ' system needs to be relaxed too!
+		\end{itemize}
+		\end{frame}
+		
+		\begin{frame}{DPFT: Dielectric properties}
+		Apply an external electric field to the system $\vec{E}$, then the dielectric tensor can be expressed as a linear response too:
+		\[ \varepsilon_\infty^{\alpha\beta} = \delta_{\alpha\beta} + \frac{1}{N_c} \ddiffd{E}{\vec{E_\alpha}}{\vec{E_\beta}} \]
+		\end{frame}
+		
+		\begin{frame}{Solve \electrons ' equation in a crystal \cite{castep}}
+		Periodic boundary conditions in lattice $\implies$ Bloch plane wave basis:
+		\[\psi_q^j(r) = \sum_G^{|G| < G_{max}} c_{q}^j(G) \cdot e^{i(q+G)r}, \quad E_{cut\psi} = \frac{\hbar^2 G_{max}^2}{2m} \]
+		Express the \textit{Kohn-Sham} energy  functional:
+		\[ E[\varrho, c_{q}^j(G)] = (K + E_H + E_{XC} + \delta V_0 + V_{en})[\varrho, c_{q}^j(G)] + V_{nn}(R) \]
+		\textit{Constraint} for $\varrho[c_{q}^j(G)]$ + \textit{orthonormality} of $c_{q}^j(G)$.
+		\par
+		\onslide<2->
+		\alert{$E[\varrho, c_{q}^j(G)]$ sums over all energy levels: set a \textbf{cutoff level} $E_{cut\varrho}$}.
+		\par
+		\alert{Preserve high freq. behaviour: \textbf{pseudopotentials}. \cite{castep}}
+		\end{frame}
+		
+		
+		
+		\begin{frame}{Algorithm implemented in Quantum Espresso}
+		\textit{Setup}: compute unperturbed solution (\texttt{pw.x}).
+		\par
+		\vspace{0.5cm}
+		For a given family of reciprocal vectors $\{q\}$:
+		\begin{itemize}
+		\item<1-> Diagonalize perturbed \electrons ' equation (\texttt{ph.x})
+		\item<1-> Compute \textit{inter-atomic force constants} in fourier space.
+		\item<2-> Convert forces into real space (\texttt{q2r.x}).
+		\item<3-> Diagonalize forces tensor (eq. \ref{eq:forces}) and get dispersion relation as eigenvalue (\texttt{matdyn.x}).
+		\end{itemize}
+		
+		\end{frame}
+		
+		
+		
+	\section{Molecule bulk \ch{MoS2}}
+	
+	    \begin{frame}{Crystal structure: overview  \cite{osti_1202268}}
+	        \begin{figure}
+	        \centering
+	        \begin{subfigure}{0.65\textwidth}
+	        \includegraphics[scale=0.3]{MoS2_horizonthal.png}
+	        \caption{Horizontal view.}
+	        \end{subfigure}
+	        \begin{subfigure}{0.3\textwidth}
+	        \includegraphics[width=\textwidth]{MoS2_vertical.png}
+	        \caption{Vertical view.}
+	        \end{subfigure}
+	        \caption{Crystal structure visualization of bulk \ch{MoS2} restricted to its primitive cell. The primitive cell is \textit{trigonal} shaped. \cite{vesta}}
+	        \end{figure}
+	    \end{frame}
+	    
+	    \begin{frame}{Crystal structure: parameters \cite{osti_1202268}}
+	    \begin{columns}[T] % align columns
+			\begin{column}{.40\textwidth}
+			\begin{block}{Primitive cell}
+    		\begin{itemize}
+    		\item $a = b = 3.190 \; \si{\angstrom}$
+    		\item $c = 14.879 \;\si{\angstrom}$
+    		\item $\alpha = \beta = 90 \si{\degree}$
+    		\item $\gamma = 120 \si{\degree}$
+    		\end{itemize}
+    		\end{block}
+			\end{column}%
+			\hfill%
+			\begin{column}{.65\textwidth}
+			\begin{block}{Atoms relative positions}
+    		\begin{tabular}{c|c|c|c}
+    	     & a & b & c \\ \hline
+    		\ch{Mo} & 0.3333 & 0.6667 & 0.25 \\ \hline
+    		\ch{Mo} & 0.6667 & 0.3333 & 0.75 \\ \hline
+    		\ch{S} & 0.3333 & 0.6667 & 0.8552 \\ \hline
+    		\ch{S} & 0.3333 & 0.6667 & 0.6448 \\ \hline
+    		\ch{S} & 0.6667 & 0.3333 & 0.3552 \\ \hline
+    		\ch{S} & 0.6667 & 0.3333 & 0.1448
+    		\end{tabular}
+    		\end{block}
+			\end{column}%
+		\end{columns}
+	    \end{frame}
+	    
+	    \begin{frame}{Reciprocal space and phonon calculation path \cite{SeeK}} \label{fr:path}
+	    \begin{columns}[T] % align columns
+			\begin{column}{.40\textwidth}
+			\begin{figure}
+			\centering
+			\includegraphics[width=\textwidth]{brillouin.png}
+			\caption{I$^{st}$ brillouin zone of bulk \ch{MoS2} (hexagonal). $\Gamma$ is defined as the center.}
+			\end{figure}
+			\end{column}
+			\hfill
+			\begin{column}{.60\textwidth}
+			\begin{block}{High symmetry frequency path}\label{eq:path}
+			    $\Gamma - M - K - \Gamma - A - L - H - A$
+			\end{block}
+			\begin{figure}
+			\centering
+			\includegraphics[width=0.6\textwidth]{brillouin_path.png}
+			\caption{Path corresponding to the path described above.}
+			\end{figure}
+			\end{column}
+		\end{columns}
+	    \end{frame}
+	
+	%-------------------------------------------------------	
+	\section{\textit{Quantum espresso} setup and simulation}
+	
+	    \begin{frame}{Workflow}
+	    \begin{columns}[T] % align columns
+	    \begin{column}{.70\textwidth}
+	    \includegraphics[scale=0.5]{steps.pdf}
+	    \end{column}
+	    \begin{column}{.30\textwidth}
+	    Scripts:
+	    \begin{itemize}
+	    \item \texttt{pw.x}
+	    \item \texttt{ph.x}
+	    \item \texttt{q2r.x}
+	    \item \texttt{matdyn.x}
+	    \item \texttt{plotband.x}
+	    \end{itemize}
+	    \end{column}
+	    \end{columns}
+	    \end{frame}
+	    
+		\begin{frame}{Self consistent simulation: system and electron}	
+		\begin{columns}[T] % align columns
+			\begin{column}{.50\textwidth}
+			\lstinputlisting{mos2-bulk.scf_system.in}
+			\begin{block}{Electron occupation}
+			Allow filling fraction of electrons 
+			\end{block}
+			\end{column}
+			\hfill
+			\begin{column}{.50\textwidth}
+			\lstinputlisting{mos2-bulk.scf_electrons.in}
+			\begin{block}{Energy cutoff parameters}
+			\begin{itemize}
+			\item \texttt{ecutrho}: $E_{cut\varrho}$ [\si{Ry}].
+			\item \texttt{ecutwfc}: $E_{cut\phi}$ [\si{Ry}].
+			\end{itemize}
+			\end{block}
+			\end{column}
+		\end{columns}
+		\end{frame}
+		
+		\begin{frame}{Self consistent simulation: lattice parameters}
+		\lstinputlisting[basicstyle=\fontsize{7}{9}\selectfont\ttfamily]{mos2-bulk.scf_eletrocn.in}
+		\end{frame}
+		
+		\begin{frame}{Analysis}	
+		
+		\begin{columns}[T] % align columns
+			\begin{column}{.50\textwidth}
+			\texttt{\color{red}{mos2-bulk.phX.in}}
+			\lstinputlisting[basicstyle=\fontsize{9}{10}\selectfont\ttfamily]{mos2-bulk.phX.in}
+			\begin{block}{$\Gamma \neq 0$}
+			\begin{itemize}
+			\item \texttt{ldisp=.false.}
+			\item \texttt{epsil=.true.}
+			\item Shift \texttt{K\_POINTS: 1 1 1}
+			\end{itemize}
+			\end{block}
+			\end{column}
+			\hfill
+			\begin{column}{.50\textwidth}
+			\texttt{\color{red}{matdyn.in}}
+			\lstinputlisting[basicstyle=\fontsize{9}{10}\selectfont\ttfamily]{matdyn.in}
+			\texttt{\color{red}{q2r.in}}
+			\lstinputlisting[basicstyle=\fontsize{9}{10}\selectfont\ttfamily]{q2r.in}
+			\end{column}
+		\end{columns}
+		\end{frame}
+	
+	%-----------------------------------------------------
+	\section{Results}
+	
+	\begin{frame}{\texttt{scf} calculations: convergence tests on total energy}
+	\begin{figure}
+	\begin{subfigure}{\textwidth}
+	\resizebox{\textwidth}{0.35\textheight}{
+		\input{graphs/conv-cutrho.pgf}
+	}
+	\caption{Energy cutoff in $U(\rho)$ [\si{Ry}].}
+	\end{subfigure}
+	
+	\begin{subfigure}{\textwidth}
+	\resizebox{\textwidth}{0.35\textheight}{
+		\input{graphs/conv-cutwfc.pgf}
+	}
+	\caption{Energy cutoff in $|\phi_n\rangle$ [\si{Ry}].}
+	\end{subfigure}
+	\end{figure}
+	\end{frame}
+	
+	\begin{frame}{\texttt{scf} calculations: convergence tests on total energy}
+	\begin{figure}
+	\resizebox{\textwidth}{0.35\textheight}{
+		\input{graphs/conv-k.pgf}
+	}
+	\caption{Number of \texttt{K\_POINTS} discretization along $(k_x, k_y)$.}
+	\end{figure}
+	\begin{columns}[T]
+	\begin{column}{0.5\textwidth}
+	\begin{block}{Advised values by QeTools}
+	\begin{itemize}
+	\item \texttt{ecutrho}: 280
+	\item \texttt{ecutwfc}: 35
+	\item \texttt{K\_POINTS}: 12
+	\end{itemize}
+	\end{block}
+	\end{column}
+	\begin{column}{0.5\textwidth}
+	\begin{exampleblock}{Reference energy}
+	Increase all values at once:
+	$E_{ref} = -370.7519$ \si{Ry}
+	\end{exampleblock}
+	\end{column}
+	\end{columns}
+	\end{frame}
+	
+	\begin{frame}{Dispersion relation and \texttt{DOS}}
+	\begin{figure}
+	\begin{subfigure}{0.7\textwidth}
+	\vspace{-0.7cm}
+	\includegraphics[trim=0 3cm 0 1cm,angle=-90,origin=c,width=0.9\textwidth, height=0.8\textheight]{graphs/mos2.dispersions.ps}
+	\end{subfigure}
+	\begin{subfigure}{0.25\textwidth}
+	\scalebox{1}[-1]{
+	\includegraphics[trim=0 4cm 0 -2cm,clip,angle=180,origin=c,width=0.9\textwidth, height=0.75\textheight]{graphs/mos2.phdos.ps}
+	}
+	\end{subfigure}
+	\caption{Dispersion relation $\Omega(Q)$ computed along the high symmetry path (frame \ref{fr:path}). On the right the density of states (DOS).}
+	\end{figure}
+	\end{frame}
+	
+	\begin{frame}{Dispersion relation and \texttt{DOS}: comparison with references}
+	\begin{figure}
+	\includegraphics[height=0.7\textheight]{graphs/phonon_dispersion.png}
+	\caption{Dispersion relation detected with X-ray Rahman scattering \cite{Hans}. Each color corresponds to a direction.}
+	\end{figure}
+	\end{frame}
+	
+	\begin{frame}{Dispersion relation and \texttt{DOS}: comparison with references}
+	\begin{figure}
+	\includegraphics[height=0.4\textheight]{graphs/bulk_dos.png}
+	\caption{Dispersion relation determined by Rahman spectroscopy and a simulated curve \cite{Molina}. Yellow points are experimental data.}
+	\end{figure}
+	% TODO: conclusions
+	\end{frame}
+	
+	\begin{frame}{Dielectric tensor}
+	\begin{columns}[T]
+	\begin{column}{0.5\textwidth}
+	\begin{equation}
+	\varepsilon = 
+        \begin{pmatrix}
+        12.75 & 0 & 0 \\
+        0 & 12.75 & 0 \\
+        0 & 0 & 3.29
+        \end{pmatrix} %TODO: units[\si{eV/\angstrom}]
+	\end{equation}
+	Error on $\varepsilon$ estimation: $0.01$
+	Absolute error with reference (fig. \ref{fig:ref_eps}): $0.35$
+	% TODO: refractive index?
+	\end{column}
+	\hfill
+	\begin{column}{0.5\textwidth}
+	\begin{figure}
+	\includegraphics[width=\textwidth]{graphs/dielectric_reference.png}
+	\caption{Reference dielectric tensor given by \textit{materials project} \cite{osti_1202268}}
+	\label{fig:ref_eps}
+	\end{figure}
+	\end{column}
+	\end{columns}
+	\end{frame}
+	
+	%----------------------------------------------
+	\section{Bibliography}
+		
+		\begin{frame}[allowframebreaks]
+			
+			\tiny\bibliographystyle{apalike}
+			\bibliography{ref}	
+			
+			 %\tiny\bibliographystyle{alpha}
+            
+		\end{frame}
+
+	%-------------------------------------------
+	\begin{frame}
+		\begin{center}
+			{\Huge \emph {\textrm{Thank  ~you!}}}
+		\end{center}
+	\end{frame}
+
+\end{document}
